@@ -1,26 +1,77 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect, useState } from "react";
 
-function App() {
+const App: React.FC = () => {
+  const cardList = ["a", "b", "a", "b"];
+  const [selectedCard, setSelectedCard] = useState<string | null>();
+  const [cardsYouGot, setCardsYouGot] = useState<Array<string>>([]);
+  const [timer, setTimer] = useState<number>();
+  const [playingTheGame, setPlayingTheGame] = useState<boolean>(false);
+
+  // useEffect(() => {
+  //   shuffleCards();
+  // 開始ボタン押したらシャッフルでも良い？
+  // });
+
+  function shuffleAndSetCards() {
+    // カードをシャッフルしてセットする
+  }
+
+  function onClickHandler(card: string) {
+    if (selectedCard) {
+      setSelectedCard(card);
+    } else {
+      compareSelectedCard(card);
+      setSelectedCard(null);
+    }
+
+    cardList.length === cardsYouGot.length || exitTheGame();
+  }
+
+  function startTimer() {
+    // タイマー開始
+    // タイムアウトした場合の処理はここにかく...?
+  }
+
+  function stopTimer() {
+    // タイマーを停止する
+  }
+
+  function startTheGame() {
+    setPlayingTheGame(true);
+    startTimer();
+    shuffleAndSetCards();
+    // スタートボタンをクリックできないようにする
+  }
+
+  function exitTheGame() {
+    // すべてのカードをクリックできないようにする
+    // 終了とか表示する？
+    setPlayingTheGame(false);
+    stopTimer();
+  }
+
+  function compareSelectedCard(card: string) {
+    if (selectedCard === card) {
+      // cardとselectedCardをcardsYouGotにセットする
+    } else {
+      // 何もしなくて良いのか...？
+    }
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
+    <>
+      <button onClick={() => startTheGame()}>start</button>
+      <div>{timer}</div>
+      {cardList.map((card) => {
+        <div
+          onClick={() => {
+            onClickHandler(card);
+          }}
         >
-          Learn React
-        </a>
-      </header>
-    </div>
+          {card}
+        </div>;
+      })}
+    </>
   );
-}
-
+};
 export default App;
