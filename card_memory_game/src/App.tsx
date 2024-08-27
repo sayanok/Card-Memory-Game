@@ -1,3 +1,4 @@
+import { time } from "console";
 import React, { useState } from "react";
 
 const App: React.FC = () => {
@@ -6,13 +7,16 @@ const App: React.FC = () => {
   const [firstSelectedCard, setFirstSelectedCard] = useState<string | null>();
   const [secondSelectedCard, setSecondSelectedCard] = useState<string | null>();
   const [cardsYouGot, setCardsYouGot] = useState<Array<string>>([]);
-  const [timer, setTimer] = useState<number>();
+  const [time, setTime] = useState<number>(5);
   const [playingTheGame, setPlayingTheGame] = useState<boolean>(false);
+  const [intervalId, setIntervalId] = useState<NodeJS.Timer | null>();
+  const [result, setResult] = useState<string>();
 
   function startTheGame() {
     setPlayingTheGame(true);
     startTimer();
     shuffleAndSetCards();
+    setResult("");
     // スタートボタンをクリックできないようにする
   }
 
@@ -21,6 +25,7 @@ const App: React.FC = () => {
     // 終了とか表示する？
     setPlayingTheGame(false);
     stopTimer();
+    setShuffledCardList([]);
   }
 
   function shuffleAndSetCards() {
@@ -49,43 +54,70 @@ const App: React.FC = () => {
     } else {
       compareFirstSelectedCard(card);
     }
-
-    cardList.length === cardsYouGot.length || exitTheGame();
   }
 
   function startTimer() {
-    // タイマー開始fv /:v;.bv.ds/:;;d:][dx:][　]
-    // タイムアウトした場合の処理はここにかく...?
+    setTime(5);
+    setIntervalId(setInterval(displayCountDownTimer, 1000));
+  }
+
+  function displayCountDownTimer() {
+    // timeが初期値のままで止まらない
+    if (time != 0 && time > 0) {
+      setTime((time) => time - 1);
+    } else {
+      setTime(0);
+      stopTimer();
+      displayGameOver();
+    }
+  }
+
+  function displayGameOver() {
+    intervalId ? clearInterval(intervalId) : console.log("タイマーに問題が発生しました");
+    setIntervalId(null);
+    setResult("ゲームオーバー");
   }
 
   function stopTimer() {
-    // タイマーを停止する
+    intervalId ? clearInterval(intervalId) : console.log("タイマーに問題が発生しました");
+    setIntervalId(null);
   }
 
   function compareFirstSelectedCard(card: string) {
     if (firstSelectedCard === card) {
       setCardsYouGot([...cardsYouGot, firstSelectedCard, card]);
-      console.log(cardsYouGot);
+      cardsYouGot.length === cardList.length || gameClear();
+      // 思うような動きではない
     } else {
       const tempCard = card;
       setSecondSelectedCard(tempCard);
     }
   }
 
+  function gameClear() {
+    setResult("ゲームクリア");
+  }
+
   return (
     <>
-      <button onClick={() => startTheGame()}>start</button>
-      <div>{timer}</div>
+      <div>
+        {playingTheGame ? (
+          <button onClick={() => exitTheGame()}>reset</button>
+        ) : (
+          <button onClick={() => startTheGame()}>start</button>
+        )}
+      </div>
+
+      <div>{time}</div>
       <div>{playingTheGame ? "start" : "not start"}</div>
       {shuffledCardList.map((card) => (
-        <button onClick={() => onClickHandler(card)} disabled={cardsYouGot.includes(card)}>
-          {card}
-        </button>
+        <button onClick={() => onClickHandler(card)}>{card}</button>
       ))}
       <div>1枚目{firstSelectedCard}</div>
       <div>2枚目{secondSelectedCard}</div>
 
       <div>獲得したカード{cardsYouGot}</div>
+      <div>結果{result}</div>
     </>
   );
 };
