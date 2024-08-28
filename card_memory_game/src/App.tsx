@@ -1,4 +1,3 @@
-import { time } from "console";
 import React, { useState } from "react";
 
 const App: React.FC = () => {
@@ -12,22 +11,28 @@ const App: React.FC = () => {
   const [intervalId, setIntervalId] = useState<NodeJS.Timer | null>();
   const [result, setResult] = useState<string>();
 
+  ////////////////////// ゲームステータスに関する機能　//////////////////////
   function startTheGame() {
     setPlayingTheGame(true);
     startTimer();
     shuffleAndSetCards();
     setResult("");
-    // スタートボタンをクリックできないようにする
   }
 
-  function exitTheGame() {
+  function exitTheGame(status: string) {
     // すべてのカードをクリックできないようにする
-    // 終了とか表示する？
     setPlayingTheGame(false);
     stopTimer();
-    setShuffledCardList([]);
+    setResult(status);
   }
 
+  function gameOver() {
+    intervalId ? clearInterval(intervalId) : console.log("タイマーに問題が発生しました");
+    setIntervalId(null);
+    exitTheGame("ゲームオーバー");
+  }
+
+  ////////////////////// 神経衰弱に関する機能 //////////////////////
   function shuffleAndSetCards() {
     let tempCardArray: Array<string> = [...cardList];
 
@@ -42,40 +47,44 @@ const App: React.FC = () => {
   }
 
   function onClickHandler(card: string) {
-    if (firstSelectedCard && secondSelectedCard) {
-      setFirstSelectedCard(null);
-      setSecondSelectedCard(null);
-    }
-
-    // 思ったように動いていない
     if (!firstSelectedCard) {
-      const tempCard = card;
-      setFirstSelectedCard(tempCard);
+      setFirstSelectedCard(card);
     } else {
-      compareFirstSelectedCard(card);
+      setSecondSelectedCard(card);
+      compareSelectedCard(card);
     }
   }
 
+  function compareSelectedCard(card: string) {
+    if (firstSelectedCard === card) {
+      let tempCardsYouGot = cardsYouGot;
+      tempCardsYouGot.push(firstSelectedCard);
+      tempCardsYouGot.push(card);
+      setCardsYouGot([...tempCardsYouGot]);
+      cardsYouGot.length === cardList.length && exitTheGame("ゲームクリア");
+    }
+
+    setTimeout(() => {
+      setFirstSelectedCard(null);
+      setSecondSelectedCard(null);
+    }, 500);
+  }
+
+  ////////////////////// タイマーに関する機能 //////////////////////
   function startTimer() {
     setTime(5);
     setIntervalId(setInterval(displayCountDownTimer, 1000));
   }
 
   function displayCountDownTimer() {
-    // timeが初期値のままで止まらない
+    // timeが初期値のままになっているのでタイマーが止まらない
     if (time != 0 && time > 0) {
       setTime((time) => time - 1);
     } else {
       setTime(0);
       stopTimer();
-      displayGameOver();
+      gameOver();
     }
-  }
-
-  function displayGameOver() {
-    intervalId ? clearInterval(intervalId) : console.log("タイマーに問題が発生しました");
-    setIntervalId(null);
-    setResult("ゲームオーバー");
   }
 
   function stopTimer() {
@@ -83,33 +92,13 @@ const App: React.FC = () => {
     setIntervalId(null);
   }
 
-  function compareFirstSelectedCard(card: string) {
-    if (firstSelectedCard === card) {
-      setCardsYouGot([...cardsYouGot, firstSelectedCard, card]);
-      cardsYouGot.length === cardList.length || gameClear();
-      // 思うような動きではない
-    } else {
-      const tempCard = card;
-      setSecondSelectedCard(tempCard);
-    }
-  }
-
-  function gameClear() {
-    setResult("ゲームクリア");
-  }
-
   return (
     <>
-      <div>
-        {playingTheGame ? (
-          <button onClick={() => exitTheGame()}>reset</button>
-        ) : (
-          <button onClick={() => startTheGame()}>start</button>
-        )}
-      </div>
+      <button onClick={() => startTheGame()} disabled={playingTheGame}>
+        start
+      </button>
 
       <div>{time}</div>
-      <div>{playingTheGame ? "start" : "not start"}</div>
       {shuffledCardList.map((card) => (
         <button onClick={() => onClickHandler(card)}>{card}</button>
       ))}
