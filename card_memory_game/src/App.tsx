@@ -1,10 +1,29 @@
 import React, { useState } from "react";
 
 const App: React.FC = () => {
-  const cardList = ["1a", "2b", "1a", "2b"];
-  const [shuffledCardList, setShuffledCardList] = useState<Array<string>>([]);
-  const [firstSelectedCard, setFirstSelectedCard] = useState<string | null>();
-  const [secondSelectedCard, setSecondSelectedCard] = useState<string | null>();
+  const cardList = [
+    { id: 0, card: "1a", isClickable: true, isHidden: true, isObtained: false },
+    { id: 1, card: "2b", isClickable: true, isHidden: true, isObtained: false },
+    { id: 2, card: "1a", isClickable: true, isHidden: true, isObtained: false },
+    { id: 3, card: "2b", isClickable: true, isHidden: true, isObtained: false },
+  ];
+  const [shuffledCardList, setShuffledCardList] = useState<
+    Array<{ id: number; card: string; isClickable: boolean; isHidden: boolean; isObtained: boolean }>
+  >([]);
+  const [firstSelectedCard, setFirstSelectedCard] = useState<{
+    id: number;
+    card: string;
+    isClickable: boolean;
+    isHidden: boolean;
+    isObtained: boolean;
+  } | null>();
+  const [secondSelectedCard, setSecondSelectedCard] = useState<{
+    id: number;
+    card: string;
+    isClickable: boolean;
+    isHidden: boolean;
+    isObtained: boolean;
+  } | null>();
   const [cardsYouGot, setCardsYouGot] = useState<Array<string>>([]);
 
   const [playingTheGame, setPlayingTheGame] = useState<boolean>(false);
@@ -16,6 +35,7 @@ const App: React.FC = () => {
 
   let intervalId: NodeJS.Timer | null;
   let timeoutId: NodeJS.Timer | null;
+  const timeLimit = 2;
 
   ////////////////////// ゲームステータスに関する機能　//////////////////////
   function startTheGame() {
@@ -26,7 +46,6 @@ const App: React.FC = () => {
   }
 
   function exitTheGame(result: string) {
-    // すべてのカードをクリックできないようにする
     setPlayingTheGame(false);
     stopTimer(result);
     setResult(result);
@@ -34,7 +53,13 @@ const App: React.FC = () => {
 
   ////////////////////// 神経衰弱に関する機能 //////////////////////
   function shuffleAndSetCards() {
-    let tempCardArray: Array<string> = [...cardList];
+    let tempCardArray: Array<{
+      id: number;
+      card: string;
+      isClickable: boolean;
+      isHidden: boolean;
+      isObtained: boolean;
+    }> = [...cardList];
 
     for (let n = 0; n < tempCardArray.length; n++) {
       let tempNum = Math.floor(Math.random() * (cardList.length - 1));
@@ -46,7 +71,15 @@ const App: React.FC = () => {
     }
   }
 
-  function onClickHandler(card: string) {
+  function onClickHandler(card: {
+    id: number;
+    card: string;
+    isClickable: boolean;
+    isHidden: boolean;
+    isObtained: boolean;
+  }) {
+    shuffledCardList.map((element) => element.id === card.id && (element.isClickable = false));
+
     if (!firstSelectedCard) {
       setFirstSelectedCard(card);
     } else {
@@ -55,30 +88,63 @@ const App: React.FC = () => {
     }
   }
 
-  function compareSelectedCard(card: string) {
-    if (firstSelectedCard === card) {
+  function compareSelectedCard(card: {
+    id: number;
+    card: string;
+    isClickable: boolean;
+    isHidden: boolean;
+    isObtained: boolean;
+  }) {
+    if (firstSelectedCard && firstSelectedCard.card === card.card) {
+      shuffledCardList.map((element) => {
+        if (element.id === firstSelectedCard.id) {
+          element.isHidden = false;
+          element.isObtained = true;
+        }
+      });
+
+      shuffledCardList.map((element) => {
+        if (element.id === card.id) {
+          element.isHidden = false;
+          element.isObtained = true;
+        }
+      });
+
       let tempCardsYouGot = cardsYouGot;
-      tempCardsYouGot.push(firstSelectedCard);
-      tempCardsYouGot.push(card);
+      tempCardsYouGot.push(firstSelectedCard.card);
+      tempCardsYouGot.push(card.card);
       setCardsYouGot([...tempCardsYouGot]);
       cardsYouGot.length === cardList.length && exitTheGame("ゲームクリア");
+      // タイムアウトしてもゲームクリアできてしまう、カードをクリックできないようにしたら解決する？
     }
 
     setTimeout(() => {
       setFirstSelectedCard(null);
       setSecondSelectedCard(null);
-    }, 500);
+
+      shuffledCardList.map((element) => {
+        if (firstSelectedCard && element.id === firstSelectedCard.id) {
+          element.isClickable = true;
+        }
+      });
+
+      shuffledCardList.map((element) => {
+        if (element.id === card.id) {
+          element.isClickable = true;
+        }
+      });
+    }, 1000);
   }
 
   ////////////////////// タイマーに関する機能 //////////////////////
   function startTimer() {
-    let timeLimit = 5;
     setTime(timeLimit);
     setCardsYouGot([]);
 
     intervalId = setInterval(() => {
       setTime((time) => time - 1);
     }, 1000);
+
     setIntervalIdForGameClear(intervalId);
 
     timeoutId = setTimeout(() => {
@@ -113,13 +179,16 @@ const App: React.FC = () => {
 
       <div>{time}</div>
       {shuffledCardList.map((card) => (
-        <button onClick={() => onClickHandler(card)}>{card}</button>
+        <button onClick={() => onClickHandler(card)} disabled={!card.isClickable}>
+          {card.card}
+        </button>
       ))}
-      <div>1枚目{firstSelectedCard}</div>
-      <div>2枚目{secondSelectedCard}</div>
+      <div>1枚目{firstSelectedCard && firstSelectedCard.card}</div>
+      <div>2枚目{secondSelectedCard && secondSelectedCard.card}</div>
 
       <div>獲得したカード{cardsYouGot}</div>
       <div>結果{result}</div>
+      <div hidden={result !== "ゲームクリア"}>ゲームクリアにかかった時間:{timeLimit - time}</div>
     </>
   );
 };
