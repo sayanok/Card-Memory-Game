@@ -1,15 +1,21 @@
 import React, { useState } from "react";
 
 const App: React.FC = () => {
-  const cardList = ["1a", "2b", "3a", "4b", "1a", "2b", "3a", "4b"];
+  const cardList = ["1a", "2b", "1a", "2b"];
   const [shuffledCardList, setShuffledCardList] = useState<Array<string>>([]);
   const [firstSelectedCard, setFirstSelectedCard] = useState<string | null>();
   const [secondSelectedCard, setSecondSelectedCard] = useState<string | null>();
   const [cardsYouGot, setCardsYouGot] = useState<Array<string>>([]);
-  const [time, setTime] = useState<number>(5);
+
   const [playingTheGame, setPlayingTheGame] = useState<boolean>(false);
-  const [intervalId, setIntervalId] = useState<NodeJS.Timer | null>();
-  const [result, setResult] = useState<string>();
+  const [result, setResult] = useState<string>("");
+
+  const [time, setTime] = useState<number>(0);
+  const [intervalIdForGameClear, setIntervalIdForGameClear] = useState<NodeJS.Timer | null>();
+  const [timeoutIdForGameClear, setTimeoutIdForGameClear] = useState<NodeJS.Timer | null>();
+
+  let intervalId: NodeJS.Timer | null;
+  let timeoutId: NodeJS.Timer | null;
 
   ////////////////////// ゲームステータスに関する機能　//////////////////////
   function startTheGame() {
@@ -19,17 +25,11 @@ const App: React.FC = () => {
     setResult("");
   }
 
-  function exitTheGame(status: string) {
+  function exitTheGame(result: string) {
     // すべてのカードをクリックできないようにする
     setPlayingTheGame(false);
-    stopTimer();
-    setResult(status);
-  }
-
-  function gameOver() {
-    intervalId ? clearInterval(intervalId) : console.log("タイマーに問題が発生しました");
-    setIntervalId(null);
-    exitTheGame("ゲームオーバー");
+    stopTimer(result);
+    setResult(result);
   }
 
   ////////////////////// 神経衰弱に関する機能 //////////////////////
@@ -72,24 +72,37 @@ const App: React.FC = () => {
 
   ////////////////////// タイマーに関する機能 //////////////////////
   function startTimer() {
-    setTime(5);
-    setIntervalId(setInterval(displayCountDownTimer, 1000));
-  }
+    let timeLimit = 5;
+    setTime(timeLimit);
+    setCardsYouGot([]);
 
-  function displayCountDownTimer() {
-    // timeが初期値のままになっているのでタイマーが止まらない
-    if (time != 0 && time > 0) {
+    intervalId = setInterval(() => {
       setTime((time) => time - 1);
-    } else {
-      setTime(0);
-      stopTimer();
-      gameOver();
-    }
+    }, 1000);
+    setIntervalIdForGameClear(intervalId);
+
+    timeoutId = setTimeout(() => {
+      exitTheGame("ゲームオーバー");
+    }, timeLimit * 1000);
+    setTimeoutIdForGameClear(timeoutId);
   }
 
-  function stopTimer() {
-    intervalId ? clearInterval(intervalId) : console.log("タイマーに問題が発生しました");
-    setIntervalId(null);
+  function stopTimer(result: string) {
+    if (result === "ゲームクリア") {
+      intervalIdForGameClear
+        ? clearInterval(intervalIdForGameClear)
+        : console.log("intervalIdForGameClearが存在しません");
+      timeoutIdForGameClear ? clearTimeout(timeoutIdForGameClear) : console.log("timeoutIdForGameClearが存在しません");
+    } else {
+      intervalId ? clearInterval(intervalId) : console.log("intervalIdが存在しません");
+      timeoutId ? clearTimeout(timeoutId) : console.log("timeoutIdが存在しません");
+    }
+
+    intervalId = null;
+    setIntervalIdForGameClear(intervalId);
+
+    timeoutId = null;
+    setTimeoutIdForGameClear(timeoutId);
   }
 
   return (
