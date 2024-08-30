@@ -35,7 +35,7 @@ const App: React.FC = () => {
 
   let intervalId: NodeJS.Timer | null;
   let timeoutId: NodeJS.Timer | null;
-  const timeLimit = 2;
+  const timeLimit = 20;
 
   ////////////////////// ゲームステータスに関する機能　//////////////////////
   function startTheGame() {
@@ -115,24 +115,26 @@ const App: React.FC = () => {
       tempCardsYouGot.push(card.card);
       setCardsYouGot([...tempCardsYouGot]);
       cardsYouGot.length === cardList.length && exitTheGame("ゲームクリア");
-      // タイムアウトしてもゲームクリアできてしまう、カードをクリックできないようにしたら解決する？
+    } else {
+      setTimeout(() => {
+        shuffledCardList.map((element) => {
+          if (firstSelectedCard && element.id === firstSelectedCard.id) {
+            element.isClickable = true;
+          }
+        });
+
+        shuffledCardList.map((element) => {
+          if (element.id === card.id) {
+            element.isClickable = true;
+          }
+        });
+      }, 1000);
+      // 1000の間に他のカードをクリックすると挙動がおかしくなる
     }
 
     setTimeout(() => {
       setFirstSelectedCard(null);
       setSecondSelectedCard(null);
-
-      shuffledCardList.map((element) => {
-        if (firstSelectedCard && element.id === firstSelectedCard.id) {
-          element.isClickable = true;
-        }
-      });
-
-      shuffledCardList.map((element) => {
-        if (element.id === card.id) {
-          element.isClickable = true;
-        }
-      });
     }, 1000);
   }
 
