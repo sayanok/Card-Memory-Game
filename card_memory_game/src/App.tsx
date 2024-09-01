@@ -87,8 +87,6 @@ const App: React.FC = () => {
   }
 
   function compareSelectedCard(card: Card) {
-    console.log(firstSelectedCard && firstSelectedCard.cardName);
-    console.log(card.cardName);
     if (firstSelectedCard && firstSelectedCard.cardName === card.cardName) {
       shuffledCardList.map((element) => {
         if (element.id === firstSelectedCard.id) {
